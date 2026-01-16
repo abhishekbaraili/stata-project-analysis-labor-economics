@@ -1,0 +1,503 @@
+-------------------------------------------------
+      name:  <unnamed>
+       log:  /Users/abhishekbaraili/Documents/dat
+> a/stata/NLFS_Mocrodata/abhishek_BECO414.log
+  log type:  text
+ opened on:  16 Jan 2026, 05:54:02
+
+. 
+. 
+. 
+. **Part A
+. *level of Education Data and Cleaning Data
+. use "S02_rc.dta",clear
+
+. 
+. 
+. 
+. *Identify the variable that contains informatio
+> n of level of education and remove observation 
+> with unreasonable values
+. *Removing the category of professional degree, 
+> literate(levelless) and illiterate
+. gen schoo_yrs = .
+(77,638 missing values generated)
+
+. replace schoo_yrs = 0 if grade_comp == 0
+(2,531 real changes made)
+
+. replace schoo_yrs = 1 if grade_comp == 1
+(2,312 real changes made)
+
+. replace schoo_yrs = 2 if grade_comp == 2
+(2,987 real changes made)
+
+. replace schoo_yrs = 3 if grade_comp == 3
+(3,430 real changes made)
+
+. replace schoo_yrs = 4 if grade_comp == 4
+(3,628 real changes made)
+
+. replace schoo_yrs = 5 if grade_comp == 5
+(4,804 real changes made)
+
+. replace schoo_yrs = 6 if grade_comp == 6
+(3,174 real changes made)
+
+. replace schoo_yrs = 7 if grade_comp == 7
+(3,743 real changes made)
+
+. replace schoo_yrs = 8 if grade_comp == 8
+(4,362 real changes made)
+
+. replace schoo_yrs = 9 if grade_comp == 9
+(2,896 real changes made)
+
+. replace schoo_yrs = 10 if grade_comp == 10
+(3,618 real changes made)
+
+. replace schoo_yrs = 10 if grade_comp == 11
+(5,388 real changes made)
+
+. replace schoo_yrs = 12 if grade_comp == 12
+(4,198 real changes made)
+
+. replace schoo_yrs = 16 if grade_comp == 13
+(1,656 real changes made)
+
+. replace schoo_yrs = 18 if grade_comp == 14
+(529 real changes made)
+
+. 
+. 
+. 
+. * Checking for missing values
+. count if missing(schoo_yrs)
+  28,382
+
+. misstable summarize schoo_yrs
+                                                 
+>               Obs<.
+                                                +
+> ------------------------------
+               |                                |
+>  Unique
+      Variable |     Obs=.     Obs>.     Obs<.  |
+>  values                                        
+>                Min                             
+>                            Max
+  -------------+--------------------------------+
+> ------------------------------
+     schoo_yrs |    28,382              49,256  |
+>      14          0          18
+  -----------------------------------------------
+> ------------------------------
+
+. drop if missing(schoo_yrs)
+(28,382 observations deleted)
+
+. save "edu.dta", replace
+file edu.dta saved
+
+. 
+. *Checking for missing values
+. * Summarize missing values for schoo_yrs
+. misstable summarize schoo_yrs, all
+                                                 
+>               Obs<.
+                                                +
+> ------------------------------
+               |                                |
+>  Unique
+      Variable |     Obs=.     Obs>.     Obs<.  |
+>  values                                        
+>                Min                             
+>                            Max
+  -------------+--------------------------------+
+> ------------------------------
+     schoo_yrs |                        49,256  |
+>      14          0          18
+  -----------------------------------------------
+> ------------------------------
+
+. 
+. * Optionally see which observations are missing
+. list grade_comp if missing(schoo_yrs)
+
+. 
+. * Drop missing observations in one line
+. drop if missing(schoo_yrs)
+(0 observations deleted)
+
+. 
+. * Save dataset
+. save "edu.dta", replace
+file edu.dta saved
+
+. 
+. *Wage data and Cleaning for unreasonable values
+>  of Wage
+. use "S06_rc.dta",clear
+
+. count if missing(amt_cashrs)
+  70,324
+
+. misstable summarize amt_cashrs
+                                                 
+>               Obs<.
+                                                +
+> ------------------------------
+               |                                |
+>  Unique
+      Variable |     Obs=.     Obs>.     Obs<.  |
+>  values                                        
+>                Min                             
+>                            Max
+  -------------+--------------------------------+
+> ------------------------------
+    amt_cashrs |    70,324               8,172  |
+>     274        100      250000
+  -----------------------------------------------
+> ------------------------------
+
+. save"wage.dta", replace
+file wage.dta saved
+
+. 
+. 
+. *merging
+. use"edu.dta",clear
+
+. merge 1:1 personid using "wage.dta"
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                        29,240
+        from master                         0  (_
+> merge==1)
+        from using                     29,240  (_
+> merge==2)
+
+    matched                            49,256  (_
+> merge==3)
+    -----------------------------------------
+
+. drop _merge
+
+. 
+. 
+. 
+. *Involved in wage jobs
+. 
+. * Total observations
+. count
+  78,496
+
+. local N_total = r(N)
+
+. 
+. * People involved in wage jobs
+. count if rcvd_cash == 1
+  8,743
+
+. local N_wage = r(N)
+
+. 
+. * Proportion
+. display "Proportion of wage job workers: " %6.3
+> f (`N_wage'/`N_total')
+Proportion of wage job workers:  0.111
+
+. 
+. 
+. *Receiving amount on daily, weekly and monthly 
+> basis
+. gen monthly = (prd_remu==1)
+
+. gen weekly  = (prd_remu==2)
+
+. gen daily   = (prd_remu==3)
+
+. summarize monthly weekly daily if rcvd_cash==1
+
+    Variable |        Obs        Mean    Std. Dev
+> .       Min        Max
+-------------+-----------------------------------
+> ----------------------
+     monthly |      8,743    .4389798    .4962909
+>           0          1
+      weekly |      8,743    .0153265    .1228551
+>           0          1
+       daily |      8,743    .4803843    .4996437
+>           0          1
+
+. 
+. 
+. gen wage_month = amt_cashrs
+(70,324 missing values generated)
+
+. replace wage_month = 0 if rcvd_cash ==.
+(69,752 real changes made)
+
+. replace wage_month = 0 if rcvd_cash != 1
+(1 real change made)
+
+. replace wage_month = amt_cashrs*365/12 if prd_r
+> emu==1   // daily
+(3,838 real changes made)
+
+. replace wage_month = amt_cashrs*52/12  if prd_r
+> emu==2   // weekly
+(134 real changes made)
+
+. replace wage_month = amt_cashrs        if prd_r
+> emu==3   // monthly
+(0 real changes made)
+
+. 
+. 
+. *Creating logarithmic of the monthly wage
+. gen ln_wage = ln(wage_month) if wage_month>0
+(70,324 missing values generated)
+
+. 
+. *Running Regression
+. reg ln_wage schoo_yrs if wage_month > 0 & age >
+> =15 & age <= 60
+
+      Source |       SS           df       MS    
+>   Number of obs   =     6,156
+-------------+---------------------------------- 
+>   F(1, 6154)      =    164.98
+       Model |  47.8914272         1  47.8914272 
+>   Prob > F        =    0.0000
+    Residual |  1786.40472     6,154  .290283509 
+>   R-squared       =    0.0261
+-------------+---------------------------------- 
+>   Adj R-squared   =    0.0260
+       Total |  1834.29614     6,155  .298017245 
+>   Root MSE        =    .53878
+
+-------------------------------------------------
+> -----------------------------
+     ln_wage |      Coef.   Std. Err.      t    P
+> >|t|                                           
+>          [95% Con                              
+>                  f. Interval]
+-------------+-----------------------------------
+> -----------------------------
+   schoo_yrs |   .0201881   .0015717    12.84   0
+> .000                                           
+>          .0171069                              
+>                      .0232692
+       _cons |   9.492366   .0162776   583.15   0
+> .000                                           
+>          9.460456                              
+>                      9.524276
+-------------------------------------------------
+> -----------------------------
+
+. 
+. 
+. *Running Full Regression after assigning wage_m
+> onth=0 for non-wage workers
+. gen full_ln_wage = ln(wage_month+1)
+(571 missing values generated)
+
+. reg full_ln_wage schoo_yrs if age >=15 & age <=
+>  60
+
+      Source |       SS           df       MS    
+>   Number of obs   =    31,775
+-------------+---------------------------------- 
+>   F(1, 31773)     =    428.97
+       Model |  6222.47096         1  6222.47096 
+>   Prob > F        =    0.0000
+    Residual |  460882.105    31,773  14.5054639 
+>   R-squared       =    0.0133
+-------------+---------------------------------- 
+>   Adj R-squared   =    0.0133
+       Total |  467104.576    31,774  14.7008427 
+>   Root MSE        =    3.8086
+
+-------------------------------------------------
+> -----------------------------
+full_ln_wage |      Coef.   Std. Err.      t    P
+> >|t|                                           
+>          [95% Con                              
+>                  f. Interval]
+-------------+-----------------------------------
+> -----------------------------
+   schoo_yrs |   .1273116   .0061468    20.71   0
+> .000                                           
+>          .1152635                              
+>                      .1393596
+       _cons |   .7796585   .0570723    13.66   0
+> .000                                           
+>          .6677945                              
+>                      .8915225
+-------------------------------------------------
+> -----------------------------
+
+. 
+. 
+. save"Part_A.dta", replace
+file Part_A.dta saved
+
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. **Part B
+. use "Part_A", clear
+
+. 
+. merge m:1 psu hhld using "S01_rc.dta"
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                             0
+    matched                            78,496  (_
+> merge==3)
+    -----------------------------------------
+
+. drop _merge
+
+. 
+. 
+. 
+. 
+. 
+. *Creating Dummies for multiple variables
+. gen piped_water = (source_water == 1)
+
+. gen impro_toilet = (type_toilet == 1 | type_toi
+> let == 2)
+
+. gen clean_light = (source_light == 1 | source_l
+> ight == 2)
+
+. gen own_house = (house_own == 1)
+
+. 
+. 
+. 
+. 
+. 
+. 
+. reg ln_wage schoo_yrs i.piped_water i.impro_toi
+> let i.clean_light i.own_house if wage_month > 0
+>  & age >=15 & age <= 60
+
+      Source |       SS           df       MS    
+>   Number of obs   =     6,156
+-------------+---------------------------------- 
+>   F(5, 6150)      =     50.97
+       Model |  72.9835792         5  14.5967158 
+>   Prob > F        =    0.0000
+    Residual |  1761.31256     6,150  .286392287 
+>   R-squared       =    0.0398
+-------------+---------------------------------- 
+>   Adj R-squared   =    0.0390
+       Total |  1834.29614     6,155  .298017245 
+>   Root MSE        =    .53516
+
+-------------------------------------------------
+> -----------------------------
+     ln_wage |      Coef.   Std. Err.      t    P
+> >|t|                                           
+>          [95% Con                              
+>                  f. Interval]
+-------------+-----------------------------------
+> -----------------------------
+   schoo_yrs |   .0174555   .0016433    10.62   0
+> .000                                           
+>           .014234                              
+>                       .020677
+1.piped_wa~r |   .0946014   .0140738     6.72   0
+> .000                                           
+>          .0670119                              
+>                      .1221909
+1.impro_to~t |  -.0137413   .0150449    -0.91   0
+> .361                                           
+>         -.0432345                              
+>                      .0157518
+1.clean_li~t |   .1267629   .0427651     2.96   0
+> .003                                           
+>          .0429284                              
+>                      .2105975
+ 1.own_house |   -.083546   .0181611    -4.60   0
+> .000                                           
+>          -.119148                              
+>                      -.047944
+       _cons |   9.418656   .0464281   202.87   0
+> .000                                           
+>          9.327641                              
+>                      9.509671
+-------------------------------------------------
+> -----------------------------
+
+. 
+. reg full_ln_wage schoo_yrs i.piped_water i.impr
+> o_toilet i.clean_light i.own_house if age >=15 
+> & age <= 60
+
+      Source |       SS           df       MS    
+>   Number of obs   =    31,775
+-------------+---------------------------------- 
+>   F(5, 31769)     =    139.00
+       Model |  9999.59798         5   1999.9196 
+>   Prob > F        =    0.0000
+    Residual |  457104.978    31,769  14.3883968 
+>   R-squared       =    0.0214
+-------------+---------------------------------- 
+>   Adj R-squared   =    0.0213
+       Total |  467104.576    31,774  14.7008427 
+>   Root MSE        =    3.7932
+
+-------------------------------------------------
+> -----------------------------
+full_ln_wage |      Coef.   Std. Err.      t    P
+> >|t|                                           
+>          [95% Con                              
+>                  f. Interval]
+-------------+-----------------------------------
+> -----------------------------
+   schoo_yrs |   .1205332   .0063084    19.11   0
+> .000                                           
+>          .1081684                              
+>                       .132898
+1.piped_wa~r |  -.0908783   .0432673    -2.10   0
+> .036                                           
+>         -.1756839                              
+>                     -.0060727
+1.impro_to~t |  -.1474366   .0452174    -3.26   0
+> .001                                           
+>         -.2360643                              
+>                     -.0588088
+1.clean_li~t |  -.4066027   .1381416    -2.94   0
+> .003                                           
+>         -.6773656                              
+>                     -.1358398
+ 1.own_house |  -1.056812    .066428   -15.91   0
+> .000                                           
+>         -1.187013                              
+>                     -.9266105
+       _cons |   2.292856   .1579874    14.51   0
+> .000                                           
+>          1.983194                              
+>                      2.602517
+-------------------------------------------------
+> -----------------------------
+
+. 
+. log close
+      name:  <unnamed>
+       log:  /Users/abhishekbaraili/Documents/dat
+> a/stata/NLFS_Mocrodata/abhishek_BECO414.log
+  log type:  text
+ closed on:  16 Jan 2026, 05:54:12
+-------------------------------------------------
